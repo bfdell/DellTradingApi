@@ -6,7 +6,6 @@ import (
 	"DellTradingApi/services"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 
 	"net/http"
 )
@@ -72,7 +71,7 @@ func RetrieveUserInfo(c *gin.Context) {
 	id, _ := c.Get("user_id")
 	userId, validInt := id.(uint)
 	if validInt {
-		user, err := services.ReadUser(&models.UserEntity{Model: gorm.Model{ID: userId}})
+		user, err := services.GetUserById(userId)
 		if err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "invalid user"})
 			return

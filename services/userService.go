@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 const JWT_EXPIRATION_DAYS uint32 = 2
@@ -25,6 +26,10 @@ func CreateUser(json *dtos.RegisterRequestDto) (*models.UserEntity, error) {
 	err := database.Create(newUser).Error
 
 	return newUser, err
+}
+
+func GetUserById(userID uint) (*models.UserEntity, error) {
+	return ReadUser(&models.UserEntity{Model: gorm.Model{ID: userID}})
 }
 
 func ReadUser(data *models.UserEntity) (*models.UserEntity, error) {

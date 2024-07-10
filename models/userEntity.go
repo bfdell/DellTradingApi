@@ -4,8 +4,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const JWT_EXPIRATION_DAYS uint32 = 2
-
 type UserEntity struct {
 	gorm.Model
 	Email     string  `gorm:"uniqueIndex"`

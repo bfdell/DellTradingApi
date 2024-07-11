@@ -1,5 +1,5 @@
 package dtos
 
-type WatchlistAppendDto struct {
+type WatchlistRequestDto struct {
 	Ticker string `form:"ticker" json:"ticker" xml:"ticker" binding:"required"`
 }

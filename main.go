@@ -30,6 +30,7 @@ func main() {
 	//init api routes
 	routeGroup := ginApi.Group("api/v0")
 	controllers.InitUserRoutes(routeGroup.Group("/users"))
+	controllers.InitWatchlistRoutes(routeGroup.Group("/watchlist"))
 
 	ginApi.Run(":8080")
 }

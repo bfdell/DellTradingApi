@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"DellTradingApi/dtos"
-	"DellTradingApi/infra"
-	"DellTradingApi/models"
 	"DellTradingApi/services"
 	"fmt"
 	"net/http"
@@ -11,11 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// todo: Change query string to fit in requst body in APPEND TICKER
 func InitWatchlistRoutes(router *gin.RouterGroup) {
 	router.GET("", GetWatchlist)
-	router.POST("", AppendTicker)
-	router.DELETE("", DeleteTicker)
+	router.POST("/append", AppendTicker)
+	router.DELETE("/remove", RemoveTicker)
 	router.DELETE("/clear", ClearWatchlist)
 }
 
@@ -26,18 +23,13 @@ func GetWatchlist(c *gin.Context) {
 		return
 	}
 
-	//preload watchlist so it can be accessed
-	if err := infra.GetDB().Model(&models.UserEntity{}).Preload("Watchlist").First(user).Error; err != nil {
+	if tickers, loadErr := services.GetWatchlistItems(user); loadErr != nil {
 		c.JSON(http.StatusUnprocessableEntity, err)
 		return
+	} else {
+		fmt.Println(tickers)
+		c.JSON(http.StatusOK, gin.H{"tickers": tickers})
 	}
-
-	var tickers []string
-	for _, listItem := range user.Watchlist {
-		tickers = append(tickers, listItem.Ticker)
-	}
-	fmt.Println(tickers)
-	c.JSON(http.StatusOK, gin.H{"tickers": tickers})
 }
 
 func AppendTicker(c *gin.Context) {
@@ -64,8 +56,28 @@ func AppendTicker(c *gin.Context) {
 	c.JSON(http.StatusCreated, "")
 }
 
-func DeleteTicker(c *gin.Context) {
+func RemoveTicker(c *gin.Context) {
+	user, err := services.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err)
+		return
+	}
 
+	// Retrieve ticker from request body
+	var json dtos.WatchlistRequestDto
+	if err := c.ShouldBindJSON(&json); err != nil {
+		//todo: more verbose json errors
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	removeErr := services.RemoveWatchlistItem(json.Ticker, user.ID)
+	if removeErr != nil {
+		c.JSON(http.StatusUnprocessableEntity, removeErr.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, "")
 }
 
 func ClearWatchlist(c *gin.Context) {

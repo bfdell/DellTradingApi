@@ -13,8 +13,8 @@ import (
 func InitUserRoutes(router *gin.RouterGroup) {
 	router.POST("/register", RegisterUser)
 	router.POST("/login", LoginUser)
-	router.POST("/authorize", AuthorizeUser)
-	router.POST("/info", RetrieveUserInfo)
+	router.GET("/authorize", AuthorizeUser)
+	router.GET("/info", RetrieveUserInfo)
 }
 
 func RegisterUser(c *gin.Context) {
@@ -68,20 +68,14 @@ func AuthorizeUser(c *gin.Context) {
 }
 
 func RetrieveUserInfo(c *gin.Context) {
-	id, _ := c.Get("user_id")
-	userId, validInt := id.(uint)
-	if validInt {
-		user, err := services.GetUserById(userId)
-		if err != nil {
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "invalid user"})
-			return
-		}
+	user, err := services.GetUserFromContext(c)
 
-		c.JSON(http.StatusOK, userInfoResponse(user))
-	} else {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "invalid user id format"})
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err)
 		return
 	}
+
+	c.JSON(http.StatusOK, userInfoResponse(user))
 }
 
 func sucessfulLoginResponse(user *models.UserEntity) gin.H {

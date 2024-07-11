@@ -4,9 +4,12 @@ import (
 	"DellTradingApi/dtos"
 	"DellTradingApi/infra"
 	"DellTradingApi/models"
+	"fmt"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -26,6 +29,23 @@ func CreateUser(json *dtos.RegisterRequestDto) (*models.UserEntity, error) {
 	err := database.Create(newUser).Error
 
 	return newUser, err
+}
+
+func GetUserFromContext(c *gin.Context) (*models.UserEntity, error) {
+	id, _ := c.Get("user_id")
+	userId, validInt := id.(uint)
+	if validInt {
+		user, err := GetUserById(userId)
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "invalid user"})
+			return nil, err
+		}
+
+		return user, nil
+	} else {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "invalid user id format"})
+		return nil, fmt.Errorf("invalid user ID")
+	}
 }
 
 func GetUserById(userID uint) (*models.UserEntity, error) {

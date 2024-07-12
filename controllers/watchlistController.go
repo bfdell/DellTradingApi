@@ -3,13 +3,10 @@ package controllers
 import (
 	"DellTradingApi/dtos"
 	"DellTradingApi/services"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
-
-//todo: fix all errors and make sure they reuurn the string
 
 func InitWatchlistRoutes(router *gin.RouterGroup) {
 	router.GET("", GetWatchlist)
@@ -21,15 +18,14 @@ func InitWatchlistRoutes(router *gin.RouterGroup) {
 func GetWatchlist(c *gin.Context) {
 	user, err := services.GetUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
 	if tickers, loadErr := services.GetWatchlistItems(user); loadErr != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		c.JSON(http.StatusUnprocessableEntity, loadErr.Error())
 		return
 	} else {
-		fmt.Println(tickers)
 		c.JSON(http.StatusOK, gin.H{"tickers": tickers})
 	}
 }
@@ -61,7 +57,7 @@ func AppendTicker(c *gin.Context) {
 func RemoveTicker(c *gin.Context) {
 	user, err := services.GetUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
@@ -69,7 +65,7 @@ func RemoveTicker(c *gin.Context) {
 	var json dtos.WatchlistRequestDto
 	if err := c.ShouldBindJSON(&json); err != nil {
 		//todo: more verbose json errors
-		c.JSON(http.StatusBadRequest, err)
+		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -85,7 +81,7 @@ func RemoveTicker(c *gin.Context) {
 func ClearWatchlist(c *gin.Context) {
 	user, err := services.GetUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 

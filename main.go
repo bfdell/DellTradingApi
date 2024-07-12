@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// todo: remove verbose error returning after everything maybe?
 func main() {
 	//init environment variables
 	err := godotenv.Load()

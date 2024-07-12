@@ -22,7 +22,7 @@ func RegisterUser(c *gin.Context) {
 	var json dtos.RegisterRequestDto
 	if err := c.ShouldBindJSON(&json); err != nil {
 		//todo: more verbose json errors
-		c.JSON(http.StatusBadRequest, err)
+		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -30,14 +30,13 @@ func RegisterUser(c *gin.Context) {
 	var newUser *models.UserEntity
 	var err error
 	if newUser, err = services.CreateUser(&json); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
 	c.JSON(http.StatusCreated, sucessfulLoginResponse(newUser))
 }
 
-// todo: should I prevent a user from loggin in twice or should I leave that to the front-end
 func LoginUser(c *gin.Context) {
 	//ensures that login request contains proper fields
 	var json dtos.LoginRequestDto
@@ -71,7 +70,7 @@ func RetrieveUserInfo(c *gin.Context) {
 	user, err := services.GetUserFromContext(c)
 
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 

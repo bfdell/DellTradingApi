@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//todo: fix all errors and make sure they reuurn the string
+
 func InitWatchlistRoutes(router *gin.RouterGroup) {
 	router.GET("", GetWatchlist)
 	router.POST("/append", AppendTicker)
@@ -35,7 +37,7 @@ func GetWatchlist(c *gin.Context) {
 func AppendTicker(c *gin.Context) {
 	user, err := services.GetUserFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
@@ -43,13 +45,13 @@ func AppendTicker(c *gin.Context) {
 	var json dtos.WatchlistRequestDto
 	if err := c.ShouldBindJSON(&json); err != nil {
 		//todo: more verbose json errors
-		c.JSON(http.StatusBadRequest, err)
+		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	createErr := services.CreateWatchlistItem(json.Ticker, user.ID)
 	if createErr != nil {
-		c.JSON(http.StatusUnprocessableEntity, err)
+		c.JSON(http.StatusUnprocessableEntity, createErr.Error())
 		return
 	}
 
@@ -81,5 +83,16 @@ func RemoveTicker(c *gin.Context) {
 }
 
 func ClearWatchlist(c *gin.Context) {
+	user, err := services.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err)
+		return
+	}
 
+	if clearErr := services.ClearWatchListItems(user); clearErr != nil {
+		c.JSON(http.StatusUnprocessableEntity, clearErr.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, "watchlist cleared")
 }

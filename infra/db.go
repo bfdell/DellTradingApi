@@ -47,8 +47,8 @@ func OpenDbConnection() *gorm.DB {
 
 // creates/updates tables to database
 func Migrate(database gorm.DB) {
-	// database.Migrator().DropTable(&models.UserEntity{}, &models.WatchlistEntity{})
-	database.AutoMigrate(&models.UserEntity{}, &models.WatchlistEntity{})
+	// database.Migrator().DropTable(&models.UserEntity{}, &models.WatchlistEntity{}, &models.PortfolioEntity{})
+	database.AutoMigrate(&models.UserEntity{}, &models.WatchlistEntity{}, &models.PortfolioEntity{})
 }
 
 func CloseDB(db *gorm.DB) error {

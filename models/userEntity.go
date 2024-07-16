@@ -13,4 +13,5 @@ type UserEntity struct {
 	Cash      float64 `gorm:"type:numeric;default:100000"`
 
 	Watchlist []WatchlistEntity `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Portfolio []PortfolioEntity `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

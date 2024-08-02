@@ -22,11 +22,15 @@ func GetWatchlist(c *gin.Context) {
 		return
 	}
 
-	if tickers, loadErr := services.GetWatchlistItems(user); loadErr != nil {
-		c.JSON(http.StatusUnprocessableEntity, loadErr.Error())
+	if watchlist, watchlistErr := services.GetWatchlistQuotes(user); watchlistErr != nil {
+		errors := ""
+		for _, error := range watchlistErr {
+			errors += error.Error() + "\n"
+		}
+		c.JSON(http.StatusUnprocessableEntity, errors)
 		return
 	} else {
-		c.JSON(http.StatusOK, gin.H{"tickers": tickers})
+		c.JSON(http.StatusOK, watchlist)
 	}
 }
 
@@ -45,13 +49,19 @@ func AppendTicker(c *gin.Context) {
 		return
 	}
 
+	quote, quoteErr := services.GetQuote(json.Ticker)
+	if quoteErr != nil {
+		c.JSON(http.StatusUnprocessableEntity, quoteErr.Error())
+		return
+	}
+
 	createErr := services.CreateWatchlistItem(json.Ticker, user.ID)
 	if createErr != nil {
 		c.JSON(http.StatusUnprocessableEntity, createErr.Error())
 		return
 	}
 
-	c.JSON(http.StatusCreated, "")
+	c.JSON(http.StatusCreated, quote)
 }
 
 func RemoveTicker(c *gin.Context) {

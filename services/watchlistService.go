@@ -1,6 +1,7 @@
 package services
 
 import (
+	"DellTradingApi/dtos"
 	"DellTradingApi/infra"
 	"DellTradingApi/models"
 	"fmt"
@@ -8,7 +9,33 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetWatchlistItems(user *models.UserEntity) ([]string, error) {
+func GetWatchlistQuotes(user *models.UserEntity) ([]*dtos.StockQuoteDto, []error) {
+	wathchlistItems, err := getWatchlistItems(user)
+	if err != nil {
+		return nil, []error{err}
+	}
+
+	var portfolioAssets []*dtos.StockQuoteDto
+	var quoteErrors []error
+	for _, ticker := range wathchlistItems {
+		quote, quoteErr := GetQuote(ticker)
+
+		//dont inlude the stocks that have trouble fetching
+		if quoteErr != nil {
+			quoteErrors = append(quoteErrors, quoteErr)
+		} else {
+			portfolioAssets = append(portfolioAssets, quote)
+		}
+	}
+
+	if len(quoteErrors) == 0 {
+		quoteErrors = nil
+	}
+
+	return portfolioAssets, quoteErrors
+}
+
+func getWatchlistItems(user *models.UserEntity) ([]string, error) {
 	//preload watchlist so it can be accessed
 	err := infra.GetDB().Model(&models.UserEntity{}).Preload("Watchlist").First(user).Error
 

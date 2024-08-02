@@ -7,11 +7,11 @@ import (
 )
 
 type PortfolioAssetDto struct {
-	StockResponseDto
+	StockQuoteDto
 	Shares uint `form:"shares" json:"shares" xml:"shares" binding:"required"`
 }
 
-type StockResponseDto struct {
+type StockQuoteDto struct {
 	Ticker        string      `form:"symbol" json:"symbol" xml:"symbol" binding:"required"`
 	Price         CustomFloat `form:"close" json:"close" xml:"close" binding:"required"`
 	Name          string      `form:"" json:"name" xml:"name" binding:"required"`

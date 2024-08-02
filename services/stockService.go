@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func GetQuote(ticker string) (*dtos.StockResponseDto, error) {
+func GetQuote(ticker string) (*dtos.StockQuoteDto, error) {
 	params := url.Values{}
 	params.Add("symbol", ticker)
 
@@ -23,11 +23,9 @@ func GetQuote(ticker string) (*dtos.StockResponseDto, error) {
 	rawJSON, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
-
 	}
 
-	// var stockResponse *dtos.StockResponseDto = &dtos.StockResponseDto{}
-	var stockResponse dtos.StockResponseDto
+	var stockResponse dtos.StockQuoteDto
 	unMarshalErr := json.Unmarshal(rawJSON, &stockResponse)
 	if unMarshalErr != nil {
 		return nil, unMarshalErr

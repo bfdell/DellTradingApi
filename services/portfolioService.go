@@ -128,8 +128,8 @@ func GetPortfolioQuotes(ID uint) ([]*dtos.PortfolioAssetDto, []error) {
 			quoteErrors = append(quoteErrors, quoteErr)
 		} else {
 			asset := &dtos.PortfolioAssetDto{
-				StockResponseDto: *quote,
-				Shares:           entry.Shares,
+				StockQuoteDto: *quote,
+				Shares:        entry.Shares,
 			}
 			portfolioAssets = append(portfolioAssets, asset)
 		}
@@ -139,5 +139,5 @@ func GetPortfolioQuotes(ID uint) ([]*dtos.PortfolioAssetDto, []error) {
 		quoteErrors = nil
 	}
 
-	return portfolioAssets, nil
+	return portfolioAssets, quoteErrors
 }

@@ -38,7 +38,7 @@ func AppendTicker(c *gin.Context) {
 	}
 
 	// Retrieve ticker from request body
-	var json dtos.WatchlistRequestDto
+	var json dtos.TickerRequestDto
 	if err := c.ShouldBindJSON(&json); err != nil {
 		//todo: more verbose json errors
 		c.JSON(http.StatusBadRequest, err.Error())
@@ -62,7 +62,7 @@ func RemoveTicker(c *gin.Context) {
 	}
 
 	// Retrieve ticker from request body
-	var json dtos.WatchlistRequestDto
+	var json dtos.TickerRequestDto
 	if err := c.ShouldBindJSON(&json); err != nil {
 		//todo: more verbose json errors
 		c.JSON(http.StatusBadRequest, err.Error())

@@ -23,6 +23,10 @@ func main() {
 	defer infra.CloseDB(database)
 	infra.Migrate(*database)
 
+	//init stock service
+	// services.InitStockService()
+
+	//gin routing
 	ginApi := gin.Default()
 
 	//set up middlewares
@@ -32,6 +36,7 @@ func main() {
 	routeGroup := ginApi.Group("api/v0")
 	controllers.InitUserRoutes(routeGroup.Group("/users"))
 	controllers.InitWatchlistRoutes(routeGroup.Group("/watchlist"))
+	controllers.InitPortfolioRoutes(routeGroup.Group("/portfolio"))
 
 	ginApi.Run(":8080")
 }

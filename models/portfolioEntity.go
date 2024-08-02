@@ -7,12 +7,12 @@ import (
 )
 
 type PortfolioEntity struct {
-	UserID   uint      `gorm:"primaryKey"`
-	Ticker   string    `gorm:"primaryKey"`
-	AsOfTime time.Time `gorm:"primaryKey"`
-	Shares   uint
+	UserID uint   `gorm:"primaryKey"`
+	Ticker string `gorm:"primaryKey"`
 
-	CreatedAt time.Time
+	CreatedAt time.Time `gorm:"primaryKey"`
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+
+	Shares uint
 }

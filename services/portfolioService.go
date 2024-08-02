@@ -1,6 +1,7 @@
 package services
 
 import (
+	"DellTradingApi/dtos"
 	"DellTradingApi/infra"
 	"DellTradingApi/models"
 	"errors"
@@ -92,4 +93,51 @@ func SellStock(ticker string, shares uint, user *models.UserEntity) error {
 	}
 
 	return nil
+}
+
+func GetPortfolio(ID uint) ([]*dtos.PortfolioEntryDto, error) {
+	//returns every ticker owned and how many shares
+	query := `
+	SELECT ticker, shares from portfolio_entities 
+	INNER JOIN (SELECT MAX(created_at) as most_recent from portfolio_entities GROUP BY ticker) 
+	as portfolio2 on created_at = portfolio2.most_recent and user_id = ?
+	`
+
+	var results []*dtos.PortfolioEntryDto
+	err := infra.GetDB().Raw(query, ID).Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func GetPortfolioQuotes(ID uint) ([]*dtos.PortfolioAssetDto, []error) {
+	portfolioEntries, err := GetPortfolio(ID)
+	if err != nil {
+		return nil, []error{err}
+	}
+
+	var portfolioAssets []*dtos.PortfolioAssetDto
+	var quoteErrors []error
+	for _, entry := range portfolioEntries {
+		quote, quoteErr := GetQuote(entry.Ticker)
+
+		//dont inlude the stocks that have trouble fetching
+		if quoteErr != nil {
+			quoteErrors = append(quoteErrors, quoteErr)
+		} else {
+			asset := &dtos.PortfolioAssetDto{
+				StockResponseDto: *quote,
+				Shares:           entry.Shares,
+			}
+			portfolioAssets = append(portfolioAssets, asset)
+		}
+	}
+
+	if len(quoteErrors) == 0 {
+		quoteErrors = nil
+	}
+
+	return portfolioAssets, nil
 }

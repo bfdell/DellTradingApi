@@ -84,6 +84,7 @@ func sucessfulLoginResponse(user *models.UserEntity) gin.H {
 	}
 }
 
+// todo: maybe i dont need these?
 func userInfoResponse(user *models.UserEntity) gin.H {
 	return gin.H{
 		"id":         user.ID,

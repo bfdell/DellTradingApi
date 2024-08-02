@@ -1,15 +1,21 @@
 package dtos
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 )
 
+type PortfolioAssetDto struct {
+	StockResponseDto
+	Shares uint `form:"shares" json:"shares" xml:"shares" binding:"required"`
+}
+
 type StockResponseDto struct {
-	Ticker        string      `form:"ticker" json:"symbol" xml:"symbol" binding:"required"`
-	Price         CustomFloat `form:"price" json:"close" xml:"close" binding:"required"`
-	Name          string      `form:"name" json:"name" xml:"name" binding:"required"`
-	DateTime      CustomDate  `form:"datetime" json:"timestamp" xml:"timestamp" binding:"required"`
+	Ticker        string      `form:"symbol" json:"symbol" xml:"symbol" binding:"required"`
+	Price         CustomFloat `form:"close" json:"close" xml:"close" binding:"required"`
+	Name          string      `form:"" json:"name" xml:"name" binding:"required"`
+	DateTime      CustomDate  `form:"timestamp" json:"timestamp" xml:"timestamp" binding:"required"`
 	PercentChange CustomFloat `form:"percent_change" json:"percent_change" xml:"percent_change" binding:"required"`
 }
 
@@ -34,6 +40,11 @@ func (cf *CustomFloat) UnmarshalJSON(b []byte) error {
 	// Set the float value
 	*cf = CustomFloat(value)
 	return nil
+}
+
+// MarshalJSON method to control JSON serialization
+func (cd *CustomDate) MarshalJSON() ([]byte, error) {
+	return json.Marshal(cd.String())
 }
 
 type CustomDate time.Time

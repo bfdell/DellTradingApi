@@ -32,7 +32,6 @@ func GetQuote(ticker string) (*dtos.StockResponseDto, error) {
 	if unMarshalErr != nil {
 		return nil, unMarshalErr
 	}
-	// fmt.Println(time.Unix(int64(stockResponse.TimeStamp), 0))
 
 	return &stockResponse, nil
 }

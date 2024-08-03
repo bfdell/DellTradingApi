@@ -42,7 +42,8 @@ func sendRequest(params url.Values, endpoint string) (*http.Response, error) {
 	}
 
 	client := &http.Client{}
-	params.Add("apikey", os.Getenv("STOCK_API_KEY"))
+	params.Add("apikey", os.Getenv("STOCK_API_SECRET"))
+
 	req.URL.RawQuery = params.Encode()
 
 	// Send the request and get a response

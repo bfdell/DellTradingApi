@@ -63,6 +63,8 @@ func LoginUser(c *gin.Context) {
 func AuthorizeUser(c *gin.Context) {
 	if _, exists := c.Get("user_id"); exists {
 		c.JSON(http.StatusOK, gin.H{"message": "You are authorized"})
+	} else {
+		c.Status(http.StatusUnauthorized)
 	}
 }
 

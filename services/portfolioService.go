@@ -195,6 +195,58 @@ func getStockHistory(portfolio map[string][]*models.PortfolioEntity, startDate s
 	return tickerHistoryMap, tickerErrors
 }
 
+func findFirstTransactionDate() (time.Time, error) {
+	db := infra.GetDB()
+	earliestEntry := &models.PortfolioEntity{}
+	err := db.Model(&models.PortfolioEntity{}).
+		Order("created_at ASC").
+		First(earliestEntry).Error
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	createdAt := earliestEntry.CreatedAt
+	firstDate := time.Date(
+		createdAt.Year(), createdAt.Month(), createdAt.Day(), 0, 0, 0, 0, createdAt.Location(),
+	)
+	return firstDate, nil
+}
+
+func getGraphStartDate(timeRange string) (time.Time, error) {
+	var yearOffset, monthOffset, dayOffset = 0, 0, 0
+	var firstTransactionDate time.Time = time.Time{}
+	var transactionErr error
+	switch timeRange {
+	case "week":
+		dayOffset = -7
+	case "month":
+		monthOffset = -1
+	case "year":
+		yearOffset = -1
+	case "max":
+		firstTransactionDate, transactionErr = findFirstTransactionDate()
+		if transactionErr != nil {
+			return time.Time{}, transactionErr
+		}
+	default:
+		return time.Time{}, fmt.Errorf("invalid time range")
+	}
+
+	var startDate time.Time
+	if firstTransactionDate == (time.Time{}) {
+
+		now := time.Now()
+		today := time.Date(
+			now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location(),
+		)
+		startDate = today.AddDate(yearOffset, monthOffset, dayOffset)
+	} else {
+		startDate = firstTransactionDate
+	}
+
+	return startDate, nil
+}
+
 // todo: add support for day
 func GetPortfolioGraph(ID uint, timeRange string) ([]*dtos.PortfolioGraphDto, error) {
 	portfolioEntities, portfolioErrs := getRawPortfolio(ID)
@@ -205,24 +257,10 @@ func GetPortfolioGraph(ID uint, timeRange string) ([]*dtos.PortfolioGraphDto, er
 		return nil, fmt.Errorf("failed to retrive portfolio data")
 	}
 
-	var graphData []*dtos.PortfolioGraphDto
-	var yearOffset, monthOffset, dayOffset = 0, 0, 0
-	switch timeRange {
-	case "week":
-		dayOffset = -7
-	case "month":
-		monthOffset = -1
-	case "year":
-		yearOffset = -1
-	default:
-		return nil, fmt.Errorf("invalid time range")
+	startDate, err := getGraphStartDate(timeRange)
+	if err != nil {
+		return nil, err
 	}
-
-	now := time.Now()
-	today := time.Date(
-		now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location(),
-	)
-	startDate := today.AddDate(yearOffset, monthOffset, dayOffset)
 	dayOfWeek := startDate.Weekday()
 	startDateStr := startDate.Format("2006-01-02")
 	if dayOfWeek == time.Saturday {
@@ -246,7 +284,12 @@ func GetPortfolioGraph(ID uint, timeRange string) ([]*dtos.PortfolioGraphDto, er
 	// 	}
 	// }
 
+	var graphData []*dtos.PortfolioGraphDto
 	//Loop through until we reach today
+	now := time.Now()
+	today := time.Date(
+		now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location(),
+	)
 	for d := startDate; d.Before(today); d = d.AddDate(0, 0, 1) {
 		var dayStr = d.Format("2006-01-02")
 		var stockValue float64

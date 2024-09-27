@@ -156,7 +156,7 @@ func getRawPortfolio(ID uint) (map[string][]*models.PortfolioEntity, []error) {
 	for _, tickerEntry := range portfolioTickers {
 
 		var tickers []*models.PortfolioEntity
-		queryErr := db.Where("ticker = ? AND user_id = ?", tickerEntry.Ticker, ID).Find(&tickers).Order("created_at ASC").Error
+		queryErr := db.Model(&models.PortfolioEntity{}).Where("ticker = ? AND user_id = ?", tickerEntry.Ticker, ID).Order("created_at").Find(&tickers).Error
 		if queryErr != nil {
 			assetErrors = append(assetErrors, queryErr)
 		} else {
@@ -218,7 +218,11 @@ func GetPortfolioGraph(ID uint, timeRange string) ([]*dtos.PortfolioGraphDto, er
 		return nil, fmt.Errorf("invalid time range")
 	}
 
-	today, startDate := time.Now(), time.Now().AddDate(yearOffset, monthOffset, dayOffset)
+	now := time.Now()
+	today := time.Date(
+		now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location(),
+	)
+	startDate := today.AddDate(yearOffset, monthOffset, dayOffset)
 	dayOfWeek := startDate.Weekday()
 	startDateStr := startDate.Format("2006-01-02")
 	if dayOfWeek == time.Saturday {

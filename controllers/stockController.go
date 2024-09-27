@@ -11,6 +11,7 @@ func InitStockRoutes(router *gin.RouterGroup) {
 	router.GET("", GetQuote)
 }
 
+// ! This endpoint is not used
 func GetQuote(c *gin.Context) {
 	_, err := services.GetUserFromContext(c)
 	if err != nil {

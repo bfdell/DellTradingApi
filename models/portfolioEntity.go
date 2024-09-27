@@ -15,4 +15,5 @@ type PortfolioEntity struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	Shares uint
+	Cash   float64 `gorm:"type:numeric"`
 }

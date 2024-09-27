@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// ! Type is not used?
 type Database struct {
 	*gorm.DB
 }

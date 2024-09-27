@@ -250,34 +250,38 @@ func GetPortfolioGraph(ID uint, timeRange string) ([]*dtos.PortfolioGraphDto, er
 	for d := startDate; d.Before(today); d = d.AddDate(0, 0, 1) {
 		var dayStr = d.Format("2006-01-02")
 		var stockValue float64
+
+		var lastTransactionOfDay *models.PortfolioEntity = nil
 		for key := range portfolioEntities {
 			//assetArr is the array of all transactions for that ticker
 			assetArr := portfolioEntities[key]
 			//find the amount of shares I had on dayStr
 			//by making each the date the last instant of every day, we ensure that we count all of my trades made for the whole day
-			stockOwned := binarySearchDate(assetArr, d.Add(24*time.Hour-time.Nanosecond))
+			lastTransaction := binarySearchEntityByDate(assetArr, d.Add(24*time.Hour-time.Nanosecond))
 
 			//find price of stock on that day (specifially) then append it to stock value
-			// a := tickerHistory[key][dayStr]
-			// fmt.Print(a)
-			// dayClose := 0
 			dayClose := tickerHistory[key][dayStr].Price
-			stockValue += float64(stockOwned) * float64(dayClose)
+			stockValue += float64(lastTransaction.Shares) * float64(dayClose)
+
+			if lastTransactionOfDay == nil {
+				lastTransactionOfDay = lastTransaction
+			} else if lastTransaction.CreatedAt.After(lastTransactionOfDay.CreatedAt) {
+				lastTransactionOfDay = lastTransaction
+			}
 		}
 		//append stockvalue to and date to array
 		graphData = append(graphData, &dtos.PortfolioGraphDto{
 			Date:        dayStr,
 			StockAssets: stockValue,
-			Cash:        100,
+			Cash:        lastTransactionOfDay.Cash,
 		})
 	}
 	//todo: the graph goes up untill yesterday, final point of refernce in graph will just be the current portfolio value?
-	//todo: add support for specific amount of cash
 
 	return graphData, nil
 }
 
-func binarySearchDate(portfolio []*models.PortfolioEntity, date time.Time) uint {
+func binarySearchEntityByDate(portfolio []*models.PortfolioEntity, date time.Time) *models.PortfolioEntity {
 	left := 0
 	right := len(portfolio) - 1
 	for left < right {
@@ -293,7 +297,10 @@ func binarySearchDate(portfolio []*models.PortfolioEntity, date time.Time) uint 
 
 	var targetEntity *models.PortfolioEntity = portfolio[left]
 	if targetEntity.CreatedAt.After(date) {
-		return 0
+		return &models.PortfolioEntity{
+			Cash:   100000,
+			Shares: 0,
+		}
 	}
-	return targetEntity.Shares
+	return targetEntity
 }

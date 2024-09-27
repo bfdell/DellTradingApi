@@ -32,6 +32,7 @@ func GetWatchlistQuotes(user *models.UserEntity) ([]*dtos.StockQuoteDto, []error
 		quoteErrors = nil
 	}
 
+	getRawPortfolio(user.ID)
 	return portfolioAssets, quoteErrors
 }
 

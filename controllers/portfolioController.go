@@ -10,6 +10,7 @@ import (
 
 func InitPortfolioRoutes(router *gin.RouterGroup) {
 	router.GET("", GetPortfolio)
+	router.GET("/graph", GetPortfolioGraph)
 	router.POST("/buy", BuyStock)
 	router.POST("/sell", SellStock)
 }
@@ -76,4 +77,31 @@ func GetPortfolio(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, portfolio)
+}
+
+func GetPortfolioGraph(c *gin.Context) {
+	user, err := services.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	var timeRange string = c.Query("range")
+	if timeRange == "" {
+		c.JSON(http.StatusBadRequest, "invalid range")
+		return
+	}
+
+	graph, graphErr := services.GetPortfolioGraph(user.ID, timeRange)
+	if graphErr != nil {
+		c.JSON(http.StatusBadRequest, graphErr.Error())
+		return
+	}
+
+	// fmt.Println("printing graphs")
+	// for _, g := range graph {
+	// 	fmt.Printf("%+v\t", g)
+	// }
+
+	c.JSON(http.StatusOK, graph)
 }

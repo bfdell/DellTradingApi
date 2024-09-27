@@ -143,3 +143,153 @@ func GetPortfolioQuotes(ID uint) ([]*dtos.PortfolioAssetDto, []error) {
 
 	return portfolioAssets, quoteErrors
 }
+
+func getRawPortfolio(ID uint) (map[string][]*models.PortfolioEntity, []error) {
+	portfolioTickers, err := GetPortfolio(ID)
+	if err != nil {
+		return nil, []error{err}
+	}
+
+	db := infra.GetDB()
+	assetMap := make(map[string][]*models.PortfolioEntity)
+	var assetErrors []error
+	for _, tickerEntry := range portfolioTickers {
+
+		var tickers []*models.PortfolioEntity
+		queryErr := db.Where("ticker = ? AND user_id = ?", tickerEntry.Ticker, ID).Find(&tickers).Order("created_at ASC").Error
+		if queryErr != nil {
+			assetErrors = append(assetErrors, queryErr)
+		} else {
+			assetMap[tickerEntry.Ticker] = tickers
+			// fmt.Println("found tickers for", tickerEntry.Ticker, " ")
+			// for _, t := range tickers {
+			// 	fmt.Printf("%+v\t", t)
+			// }
+			// fmt.Println("\n\n\n")
+		}
+	}
+
+	if len(assetErrors) == 0 {
+		assetErrors = nil
+	}
+
+	return assetMap, assetErrors
+}
+
+func getStockHistory(portfolio map[string][]*models.PortfolioEntity, startDate string) (map[string]map[string]*dtos.TimeSeriesQuoteDto, []error) {
+	tickerHistoryMap := make(map[string]map[string]*dtos.TimeSeriesQuoteDto)
+	var tickerErrors []error
+	for key := range portfolio {
+		tickerHistory, err := GetHistory(key, startDate)
+		if err != nil {
+			tickerErrors = append(tickerErrors, err)
+		} else {
+			tickerHistoryMap[key] = tickerHistory
+		}
+	}
+
+	if len(tickerErrors) == 0 {
+		tickerErrors = nil
+	}
+
+	return tickerHistoryMap, tickerErrors
+}
+
+// todo: add support for day
+func GetPortfolioGraph(ID uint, timeRange string) ([]*dtos.PortfolioGraphDto, error) {
+	portfolioEntities, portfolioErrs := getRawPortfolio(ID)
+	if portfolioErrs != nil {
+		// for _, err := range portfolioErrs {
+		// 	fmt.Printf("%+v\n", err)
+		// }
+		return nil, fmt.Errorf("failed to retrive portfolio data")
+	}
+
+	var graphData []*dtos.PortfolioGraphDto
+	var yearOffset, monthOffset, dayOffset = 0, 0, 0
+	switch timeRange {
+	case "week":
+		dayOffset = -7
+	case "month":
+		monthOffset = -1
+	case "year":
+		yearOffset = -1
+	default:
+		return nil, fmt.Errorf("invalid time range")
+	}
+
+	today, startDate := time.Now(), time.Now().AddDate(yearOffset, monthOffset, dayOffset)
+	dayOfWeek := startDate.Weekday()
+	startDateStr := startDate.Format("2006-01-02")
+	if dayOfWeek == time.Saturday {
+		startDateStr = startDate.AddDate(0, 0, -1).Format("2006-01-02")
+	}
+	if dayOfWeek == time.Sunday {
+		startDateStr = startDate.AddDate(0, 0, -2).Format("2006-01-02")
+	}
+	tickerHistory, tickerErrs := getStockHistory(portfolioEntities, startDateStr)
+	if tickerErrs != nil {
+		// for _, err := range tickerErrs {
+		// 	fmt.Printf("%+v\n", err)
+		// }
+		return nil, fmt.Errorf("failed to retrive ticker history data")
+	}
+
+	// fmt.Println("printing ticker history")
+	// for _, historyMap := range tickerHistory {
+	// 	for _, item := range historyMap {
+	// 		fmt.Printf("%+v\t", item)
+	// 	}
+	// }
+
+	//Loop through until we reach today
+	for d := startDate; d.Before(today); d = d.AddDate(0, 0, 1) {
+		var dayStr = d.Format("2006-01-02")
+		var stockValue float64
+		for key := range portfolioEntities {
+			//assetArr is the array of all transactions for that ticker
+			assetArr := portfolioEntities[key]
+			//find the amount of shares I had on dayStr
+			//by making each the date the last instant of every day, we ensure that we count all of my trades made for the whole day
+			stockOwned := binarySearchDate(assetArr, d.Add(24*time.Hour-time.Nanosecond))
+
+			//find price of stock on that day (specifially) then append it to stock value
+			// a := tickerHistory[key][dayStr]
+			// fmt.Print(a)
+			// dayClose := 0
+			dayClose := tickerHistory[key][dayStr].Price
+			stockValue += float64(stockOwned) * float64(dayClose)
+		}
+		//append stockvalue to and date to array
+		graphData = append(graphData, &dtos.PortfolioGraphDto{
+			Date:        dayStr,
+			StockAssets: stockValue,
+			Cash:        100,
+		})
+	}
+	//todo: the graph goes up untill yesterday, final point of refernce in graph will just be the current portfolio value?
+	//todo: add support for specific amount of cash
+
+	return graphData, nil
+}
+
+func binarySearchDate(portfolio []*models.PortfolioEntity, date time.Time) uint {
+	left := 0
+	right := len(portfolio) - 1
+	for left < right {
+		mid := (left + right + 1) / 2
+		midDate := portfolio[mid].CreatedAt
+
+		if midDate.After(date) {
+			right = mid - 1
+		} else {
+			left = mid
+		}
+	}
+
+	var targetEntity *models.PortfolioEntity = portfolio[left]
+	if targetEntity.CreatedAt.After(date) {
+		return 0
+	}
+	return targetEntity.Shares
+}

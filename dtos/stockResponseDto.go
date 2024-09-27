@@ -19,6 +19,15 @@ type StockQuoteDto struct {
 	PercentChange CustomFloat `form:"percent_change" json:"percent_change" xml:"percent_change" binding:"required"`
 }
 
+type TimeSeriesDto struct {
+	Values []*TimeSeriesQuoteDto `form:"values" json:"values" xml:"values" binding:"required"`
+}
+
+type TimeSeriesQuoteDto struct {
+	Price CustomFloat `form:"close" json:"close" xml:"close" binding:"required"`
+	Date  string      `form:"datetime" json:"datetime" xml:"datetime" binding:"required"`
+}
+
 // These two custom types are made to convert the data recieved from the api into the proper type and format
 type CustomFloat float64
 

@@ -9,7 +9,7 @@ import (
 )
 
 func InitPortfolioRoutes(router *gin.RouterGroup) {
-	router.GET("/", GetPortfolio)
+	router.GET("", GetPortfolio)
 	router.POST("/buy", BuyStock)
 	router.POST("/sell", SellStock)
 }

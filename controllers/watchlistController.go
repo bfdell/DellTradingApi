@@ -70,7 +70,6 @@ func RemoveTicker(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-
 	// Retrieve ticker from request body
 	var json dtos.TickerRequestDto
 	if err := c.ShouldBindJSON(&json); err != nil {

@@ -26,11 +26,15 @@ func GetQuote(ticker string) (*dtos.StockQuoteDto, error) {
 	}
 
 	var stockResponse dtos.StockQuoteDto
+
 	unMarshalErr := json.Unmarshal(rawJSON, &stockResponse)
 	if unMarshalErr != nil {
 		return nil, unMarshalErr
 	}
 
+	if stockResponse.Name == "" {
+		return nil, fmt.Errorf("invalid ticker")
+	}
 	return &stockResponse, nil
 }
 
@@ -48,5 +52,6 @@ func sendRequest(params url.Values, endpoint string) (*http.Response, error) {
 
 	// Send the request and get a response
 	resp, err := client.Do(req)
+	//try using .GET INSTEAD
 	return resp, err
 }

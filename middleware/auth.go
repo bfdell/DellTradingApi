@@ -31,7 +31,7 @@ func EnsureAuthenticated(c *gin.Context) {
 		var path string = c.Request.URL.Path
 		if path != "/api/v0/users/register" && path != "/api/v0/users/login" {
 			//stop executing api request if user is not valid
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "INVALID BEARER TOKEN"})
 		}
 
 		return

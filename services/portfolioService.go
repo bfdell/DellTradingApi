@@ -121,17 +121,19 @@ func GetPortfolioQuotes(ID uint) ([]*dtos.PortfolioAssetDto, []error) {
 	var portfolioAssets []*dtos.PortfolioAssetDto
 	var quoteErrors []error
 	for _, entry := range portfolioEntries {
-		quote, quoteErr := GetQuote(entry.Ticker)
+		if entry.Shares > 0 {
+			quote, quoteErr := GetQuote(entry.Ticker)
 
-		//dont inlude the stocks that have trouble fetching
-		if quoteErr != nil {
-			quoteErrors = append(quoteErrors, quoteErr)
-		} else {
-			asset := &dtos.PortfolioAssetDto{
-				StockQuoteDto: *quote,
-				Shares:        entry.Shares,
+			//dont inlude the stocks that have trouble fetching
+			if quoteErr != nil {
+				quoteErrors = append(quoteErrors, quoteErr)
+			} else {
+				asset := &dtos.PortfolioAssetDto{
+					StockQuoteDto: *quote,
+					Shares:        entry.Shares,
+				}
+				portfolioAssets = append(portfolioAssets, asset)
 			}
-			portfolioAssets = append(portfolioAssets, asset)
 		}
 	}
 

@@ -176,7 +176,7 @@ func getRawPortfolio(ID uint) (map[string][]*models.PortfolioEntity, []error) {
 	return assetMap, assetErrors
 }
 
-func getStockHistory(portfolio map[string][]*models.PortfolioEntity, startDate string) (map[string]map[string]*dtos.TimeSeriesQuoteDto, []error) {
+func getStockHistory(portfolio map[string][]*models.PortfolioEntity, startDate time.Time) (map[string]map[string]*dtos.TimeSeriesQuoteDto, []error) {
 	tickerHistoryMap := make(map[string]map[string]*dtos.TimeSeriesQuoteDto)
 	var tickerErrors []error
 	for key := range portfolio {
@@ -261,15 +261,8 @@ func GetPortfolioGraph(ID uint, timeRange string) ([]*dtos.PortfolioGraphDto, er
 	if err != nil {
 		return nil, err
 	}
-	dayOfWeek := startDate.Weekday()
-	startDateStr := startDate.Format("2006-01-02")
-	if dayOfWeek == time.Saturday {
-		startDateStr = startDate.AddDate(0, 0, -1).Format("2006-01-02")
-	}
-	if dayOfWeek == time.Sunday {
-		startDateStr = startDate.AddDate(0, 0, -2).Format("2006-01-02")
-	}
-	tickerHistory, tickerErrs := getStockHistory(portfolioEntities, startDateStr)
+
+	tickerHistory, tickerErrs := getStockHistory(portfolioEntities, startDate)
 	if tickerErrs != nil {
 		// for _, err := range tickerErrs {
 		// 	fmt.Printf("%+v\n", err)

@@ -41,11 +41,23 @@ func GetQuote(ticker string) (*dtos.StockQuoteDto, error) {
 	return &stockResponse, nil
 }
 
-func GetHistory(ticker string, startDate string) (map[string]*dtos.TimeSeriesQuoteDto, error) {
+func GetHistory(ticker string, startDate time.Time) (map[string]*dtos.TimeSeriesQuoteDto, error) {
 	params := url.Values{}
 	params.Add("symbol", ticker)
 	params.Add("interval", "1day")
-	params.Add("start_date", startDate)
+
+	dayOfWeek := startDate.Weekday()
+	startDateStr := startDate.Format("2006-01-02")
+	var backOffset bool
+	if dayOfWeek == time.Saturday {
+		startDateStr = startDate.AddDate(0, 0, -1).Format("2006-01-02")
+		backOffset = true
+	}
+	if dayOfWeek == time.Sunday {
+		startDateStr = startDate.AddDate(0, 0, -2).Format("2006-01-02")
+		backOffset = true
+	}
+	params.Add("start_date", startDateStr)
 
 	resp, err := sendRequest(params, "time_series")
 	if err != nil {
@@ -67,26 +79,34 @@ func GetHistory(ticker string, startDate string) (map[string]*dtos.TimeSeriesQuo
 	priceHistory := stockHistory.Values
 	historyMap := make(map[string]*dtos.TimeSeriesQuoteDto)
 
-	nextDate := priceHistory[len(priceHistory)-1].Date
+	now := time.Now()
+	today := time.Date(
+		now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location(),
+	)
 	lastQuote := priceHistory[len(priceHistory)-1]
-	for i := len(priceHistory) - 1; i > -1; {
-		timeSlice := priceHistory[i]
-		dateKey := strings.Split(timeSlice.Date, " ")[0]
-		if timeSlice.Date != nextDate {
-			dateKey = strings.Split(nextDate, " ")[0]
-			historyMap[dateKey] = lastQuote
-		} else {
-			historyMap[dateKey] = timeSlice
+	dateKey := startDate
+	for i := len(priceHistory) - 1; dateKey.Before(today) || i > -1; {
+		dateStr := strings.Split(dateKey.Format("2006-01-02"), " ")[0]
+
+		if i > -1 && dateStr == priceHistory[i].Date {
+			timeSlice := priceHistory[i]
+			//if they match, all is normal
+			historyMap[dateStr] = timeSlice
 			lastQuote = timeSlice
 			i--
-		}
+		} else {
+			//set the value equal to the last value we had
+			historyMap[dateStr] = lastQuote
 
-		parsed, err := time.Parse("2006-01-02", nextDate)
-		if err != nil {
-			return nil, err
+			//if our stock api had to start before our start date to compensate for weekends
+			//and we just insert our sunday, value, decrement the api response pointer so we can
+			//reach the next value, and have our two date pointers sync up with one another
+			if backOffset && dateKey.Weekday() == time.Sunday {
+				i--
+				backOffset = false
+			}
 		}
-		nextDate = parsed.AddDate(0, 0, 1).Format("2006-01-02")
-
+		dateKey = dateKey.AddDate(0, 0, 1)
 	}
 
 	return historyMap, nil

@@ -47,6 +47,7 @@ func BuyStock(ticker string, shares uint, user *models.UserEntity) error {
 
 	user.Cash -= cost
 	portfolioEntry.Shares += shares
+	portfolioEntry.Cash = user.Cash
 
 	userErr := infra.GetDB().Save(user).Error
 	if userErr != nil {
@@ -82,6 +83,7 @@ func SellStock(ticker string, shares uint, user *models.UserEntity) error {
 	revenue := stockPrice * float64(shares)
 	user.Cash += revenue
 	portfolioEntry.Shares -= shares
+	portfolioEntry.Cash = user.Cash
 
 	userErr := infra.GetDB().Save(user).Error
 	if userErr != nil {

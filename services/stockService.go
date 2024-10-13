@@ -103,6 +103,12 @@ func GetHistory(ticker string, startDate time.Time) (map[string]*dtos.TimeSeries
 			//reach the next value, and have our two date pointers sync up with one another
 			if backOffset && dateKey.Weekday() == time.Sunday {
 				i--
+
+				//if the stock api for some reason contains data on a sunday
+				//decrement it again, and go to monday
+				if dateStr == priceHistory[i].Date {
+					i--
+				}
 				backOffset = false
 			}
 		}
